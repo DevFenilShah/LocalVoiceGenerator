@@ -1,0 +1,529 @@
+@{
+    ViewData["Title"] = "Local Voice Generator";
+    Layout = null;
+}
+
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>@ViewData["Title"]</title>
+</head>
+
+<body>
+
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        html,
+        body {
+            width: 100%;
+            height: 100%;
+            overflow: hidden;
+        }
+
+        body {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .header {
+            background: rgba(0, 0, 0, 0.1);
+            color: white;
+            padding: 20px;
+            text-align: center;
+            border-bottom: 2px solid rgba(255, 255, 255, 0.2);
+        }
+
+        .header h1 {
+            font-size: 2rem;
+            margin: 0;
+            letter-spacing: -0.5px;
+        }
+
+        .header p {
+            font-size: 0.9rem;
+            opacity: 0.9;
+            margin: 5px 0 0 0;
+        }
+
+        .main-container {
+            display: flex;
+            flex: 1;
+            overflow: hidden;
+            gap: 20px;
+            padding: 20px;
+        }
+
+        .form-section {
+            flex: 0 0 70%;
+            background: white;
+            border-radius: 15px;
+            padding: 25px;
+            box-shadow: 0 10px 40px rgba(0, 0, 0, 0.2);
+            overflow-y: auto;
+        }
+
+        .preview-section {
+            flex: 0 0 30%;
+            background: white;
+            border-radius: 15px;
+            padding: 25px;
+            box-shadow: 0 10px 40px rgba(0, 0, 0, 0.2);
+            display: flex;
+            flex-direction: column;
+            overflow-y: auto;
+        }
+
+        .form-group {
+            margin-bottom: 18px;
+        }
+
+        label {
+            display: block;
+            margin-bottom: 6px;
+            font-weight: 600;
+            color: #333;
+            font-size: 0.9rem;
+        }
+
+        textarea,
+        select,
+        input[type="range"] {
+            width: 100%;
+            padding: 10px;
+            border: 2px solid #e0e0e0;
+            border-radius: 8px;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            font-size: 0.95rem;
+            transition: border-color 0.3s;
+        }
+
+        textarea:focus,
+        select:focus,
+        input[type="range"]:focus {
+            outline: none;
+            border-color: #667eea;
+        }
+
+        textarea {
+            resize: none;
+            min-height: 150px;
+            line-height: 1.4;
+        }
+
+        .char-count {
+            font-size: 0.8rem;
+            color: #999;
+            margin-top: 4px;
+        }
+
+        .char-count.warning {
+            color: #ff6b6b;
+        }
+
+        .row-group {
+            display: grid;
+            grid-template-columns: 1fr 1fr 1fr;
+            gap: 12px;
+        }
+
+        .slider-container {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .slider-container input[type="range"] {
+            flex: 1;
+            margin: 0;
+            padding: 0;
+        }
+
+        .slider-value {
+            min-width: 45px;
+            text-align: center;
+            font-weight: 600;
+            color: #667eea;
+            font-size: 0.9rem;
+        }
+
+        .btn-group {
+            display: flex;
+            gap: 10px;
+            margin-top: 20px;
+        }
+
+        button {
+            flex: 1;
+            padding: 12px;
+            font-size: 0.95rem;
+            font-weight: 600;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+
+        .btn-generate {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+        }
+
+        .btn-generate:hover:not(:disabled) {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 20px rgba(102, 126, 234, 0.4);
+        }
+
+        .btn-generate:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+        }
+
+        .spinner {
+            display: none;
+            text-align: center;
+            margin: 15px 0;
+        }
+
+        .spinner.show {
+            display: block;
+        }
+
+        .spinner-border {
+            display: inline-block;
+            width: 1.5rem;
+            height: 1.5rem;
+            vertical-align: text-bottom;
+            border: 0.25em solid currentColor;
+            border-right-color: transparent;
+            border-radius: 50%;
+            animation: spinner-border 0.75s linear infinite;
+            color: #667eea;
+        }
+
+        @@keyframes spinner-border {
+            to {
+                transform: rotate(360deg);
+            }
+        }
+
+        .alert {
+            padding: 12px;
+            border-radius: 8px;
+            margin-bottom: 15px;
+            display: none;
+            font-size: 0.9rem;
+        }
+
+        .alert.show {
+            display: block;
+        }
+
+        .alert-danger {
+            background: #ffebee;
+            color: #c62828;
+            border: 1px solid #ef5350;
+        }
+
+        .alert-success {
+            background: #e8f5e9;
+            color: #2e7d32;
+            border: 1px solid #81c784;
+        }
+
+        .audio-preview {
+            margin-top: 20px;
+            padding: 18px;
+            background: #f5f5f5;
+            border-radius: 8px;
+            display: none;
+            flex: 1;
+        }
+
+        .audio-preview.show {
+            display: flex;
+            flex-direction: column;
+        }
+
+        .audio-preview h5 {
+            margin: 0 0 12px 0;
+            color: #333;
+            font-size: 0.95rem;
+        }
+
+        .audio-preview audio {
+            width: 100%;
+            margin-top: 10px;
+        }
+
+        @@media (max-width: 1200px) {
+            .main-container {
+                flex-direction: column;
+                gap: 15px;
+                padding: 15px;
+            }
+
+            .form-section {
+                flex: 0 0 auto;
+                max-height: 50%;
+            }
+
+            .preview-section {
+                flex: 1;
+            }
+
+            .header {
+                padding: 15px;
+            }
+
+            .header h1 {
+                font-size: 1.5rem;
+            }
+
+            .header p {
+                font-size: 0.8rem;
+            }
+
+            .row-group {
+                grid-template-columns: 1fr 1fr;
+            }
+        }
+
+        @@media (max-width: 768px) {
+            .main-container {
+                flex-direction: column;
+                gap: 15px;
+                padding: 10px;
+            }
+
+            .form-section,
+            .preview-section {
+                flex: 0 0 auto;
+            }
+
+            .row-group {
+                grid-template-columns: 1fr;
+            }
+
+            .btn-group {
+                flex-direction: column;
+            }
+
+            .header {
+                padding: 10px;
+            }
+
+            .header h1 {
+                font-size: 1.3rem;
+            }
+        }
+    </style>
+
+    <div class="header">
+        <h1>🎤 Local Voice Generator</h1>
+        <p>Convert Text to Speech in English, Hindi & Gujarati</p>
+    </div>
+
+    <div class="main-container">
+        <!-- Left Section: Configuration Form -->
+        <div class="form-section">
+            <div class="alert alert-danger" id="errorAlert" role="alert">
+                <strong>Error:</strong> <span id="errorMessage"></span>
+            </div>
+            <div class="alert alert-success" id="successAlert" role="alert">
+                ✓ Audio generated successfully!
+            </div>
+
+            <form id="voiceForm">
+                <div class="form-group">
+                    <label for="text">Script</label>
+                    <textarea id="text" name="text" placeholder="Enter your text here..." required></textarea>
+                    <div class="char-count"><span id="charCount">0</span> / 5000</div>
+                </div>
+
+                <div class="row-group">
+                    <div class="form-group">
+                        <label for="languageCode">Language</label>
+                        <select id="languageCode" name="languageCode">
+                            <option value="en-IN">English</option>
+                            <option value="hi-IN">Hindi</option>
+                            <option value="gu-IN">Gujarati</option>
+                        </select>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="voiceType">Voice Type</label>
+                        <select id="voiceType" name="voiceType">
+                            <option value="standard">Standard</option>
+                            <option value="wavenet">Wavenet</option>
+                        </select>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="gender">Gender</label>
+                        <select id="gender" name="gender">
+                            <option value="male">Male</option>
+                            <option value="female">Female</option>
+                        </select>
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label for="speakingRate">Speaking Rate</label>
+                    <div class="slider-container">
+                        <input type="range" id="speakingRate" name="speakingRate" min="0.5" max="2.0" step="0.1"
+                            value="1.0">
+                        <span class="slider-value" id="speakingRateValue">1.0x</span>
+                    </div>
+                </div>
+
+                <div class="spinner" id="spinner">
+                    <div class="spinner-border" role="status">
+                        <span class="sr-only">Loading...</span>
+                    </div>
+                </div>
+
+                <div class="btn-group">
+                    <button type="button" class="btn-generate" id="previewBtn">🔊 Preview</button>
+                    <button type="submit" class="btn-generate" id="generateBtn">⬇️ Download</button>
+                </div>
+            </form>
+        </div>
+
+        <!-- Right Section: Audio Preview -->
+        <div class="preview-section">
+            <div class="audio-preview" id="audioPreview">
+                <h5>🎵 Audio Preview</h5>
+                <audio id="audioPlayer" controls></audio>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const form = document.getElementById('voiceForm');
+        const textArea = document.getElementById('text');
+        const charCount = document.getElementById('charCount');
+        const speakingRate = document.getElementById('speakingRate');
+        const speakingRateValue = document.getElementById('speakingRateValue');
+        const previewBtn = document.getElementById('previewBtn');
+        const generateBtn = document.getElementById('generateBtn');
+        const spinner = document.getElementById('spinner');
+        const errorAlert = document.getElementById('errorAlert');
+        const successAlert = document.getElementById('successAlert');
+        const errorMessage = document.getElementById('errorMessage');
+        const audioPreview = document.getElementById('audioPreview');
+        const audioPlayer = document.getElementById('audioPlayer');
+
+        // Character counter
+        textArea.addEventListener('input', function () {
+            const count = this.value.length;
+            charCount.textContent = count;
+
+            const charCountDiv = document.querySelector('.char-count');
+            if (count > 4500) {
+                charCountDiv.classList.add('warning');
+            } else {
+                charCountDiv.classList.remove('warning');
+            }
+        });
+
+        // Speaking rate slider
+        speakingRate.addEventListener('input', function () {
+            speakingRateValue.textContent = this.value + 'x';
+        });
+
+        // Preview button
+        previewBtn.addEventListener('click', async function (e) {
+            e.preventDefault();
+            await generateAudio(true);
+        });
+
+        // Generate/Download button
+        form.addEventListener('submit', async function (e) {
+            e.preventDefault();
+            await generateAudio(false);
+        });
+
+        async function generateAudio(isPreview) {
+            const text = textArea.value.trim();
+            const languageCode = document.getElementById('languageCode').value;
+            const voiceType = document.getElementById('voiceType').value;
+            const gender = document.getElementById('gender').value;
+            const rate = parseFloat(speakingRate.value);
+
+            // Hide previous alerts
+            errorAlert.classList.remove('show');
+            successAlert.classList.remove('show');
+
+            // Show spinner
+            spinner.classList.add('show');
+            previewBtn.disabled = true;
+            generateBtn.disabled = true;
+
+            try {
+                const response = await fetch(isPreview ? '/Voice/Preview' : '/Voice/Generate', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        text: text,
+                        languageCode: languageCode,
+                        voiceType: voiceType,
+                        gender: gender,
+                        speakingRate: rate
+                    })
+                });
+
+                if (isPreview) {
+                    const data = await response.json();
+                    if (data.success) {
+                        audioPlayer.src = 'data:audio/mpeg;base64,' + data.audio;
+                        audioPreview.classList.add('show');
+                        successAlert.classList.add('show');
+                    } else {
+                        showError(data.error);
+                    }
+                } else {
+                    if (response.ok) {
+                        const blob = await response.blob();
+                        const url = window.URL.createObjectURL(blob);
+                        const a = document.createElement('a');
+                        a.href = url;
+                        a.download = 'voiceover.mp3';
+                        document.body.appendChild(a);
+                        a.click();
+                        window.URL.revokeObjectURL(url);
+                        document.body.removeChild(a);
+                        successAlert.classList.add('show');
+                    } else {
+                        const data = await response.json();
+                        showError(data.error || 'Failed to generate audio');
+                    }
+                }
+            } catch (error) {
+                showError('An error occurred: ' + error.message);
+            } finally {
+                spinner.classList.remove('show');
+                previewBtn.disabled = false;
+                generateBtn.disabled = false;
+            }
+        }
+
+        function showError(message) {
+            errorMessage.textContent = message;
+            errorAlert.classList.add('show');
+        }
+    </script>
+</body>
+
+</html>
