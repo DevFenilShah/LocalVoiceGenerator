@@ -93,8 +93,8 @@ namespace LocalVoiceGenerator.Services
 
             return languageCode switch
             {
-                // Hindi (India) - Male: A, Female: D
-                "hi-IN" => gender.ToLower() == "male" ? $"hi-IN-{voicePrefix}-A" : $"hi-IN-{voicePrefix}-D",
+                // Hindi (India) - Male: B/C/F, Female: A/D/E
+                "hi-IN" => gender.ToLower() == "male" ? $"hi-IN-{voicePrefix}-B" : $"hi-IN-{voicePrefix}-A",
 
                 // English (India) - Male: B, Female: A
                 "en-IN" => gender.ToLower() == "male" ? $"en-IN-{voicePrefix}-B" : $"en-IN-{voicePrefix}-A",
